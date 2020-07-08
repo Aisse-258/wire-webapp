@@ -79,11 +79,22 @@ class Server {
     }
 
     const webpackCompiler = require('webpack')(require('../../webpack.config.dev'));
+
     const webpackDevMiddleware = require('webpack-dev-middleware');
     const webpackHotMiddleware = require('webpack-hot-middleware');
 
-    this.app.use(webpackDevMiddleware(webpackCompiler));
-    this.app.use(webpackHotMiddleware(webpackCompiler));
+    const webpackBundle = webpackDevMiddleware(webpackCompiler);
+    const hotMiddleware = webpackHotMiddleware(webpackCompiler);
+
+    this.app.use(webpackBundle);
+    this.app.use(hotMiddleware);
+
+    const chokidar = require('chokidar');
+    chokidar.watch(path.join(__dirname, 'static/**/*.html')).on('all', () => {
+      // webpackCompiler.run();
+      hotMiddleware.publish({action: 'reload'});
+      // webpackBundle.invalidate();
+    });
   }
 
   private initCaching() {
